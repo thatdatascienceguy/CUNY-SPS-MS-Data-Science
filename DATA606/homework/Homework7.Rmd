@@ -1,0 +1,112 @@
+---
+title: "Homework 7"
+author: "Jonathan Hernandez"
+date: "April 18, 2018"
+output: html_document
+---
+
+7.24
+
+a) The relationship between number of calories and amount of carbs in Starbucks food is a positive, weakly linear relationship as 
+
+many points are away from the best fit line.
+
+b) The explanatory variable is the Carbs and the response variable is the Calories consumed.
+
+c) The reason why we might want to fit a linear regression model is so that we can see and possibly predict given a number of 
+
+calories, can predict with good accuracy how much carbs is consumed. By using linear regression we can get a linear equation and can 
+
+easily calculate how much carbs.
+
+d) The distribution of residuals is nearly normal so that is one condition satisfied. However the calories vs. Residuals plot does 
+
+not follow a straight line well. This is also the same for the calories vs carbs plot as the plot shows a few outliers and many large 
+residuals.
+
+7.26
+
+x_girth = 107.20 cm
+
+o_girth = 10.37 cm
+
+x_height = 171.14 cm
+
+o_height = 99 cm
+
+R = 0.67                                                               
+
+a) Using the equation y – y_bar = b(x – x_bar) for the regression line where y_bar = x_height, x_bar = x_girth and 
+
+b1=(o_girth/o_height)*R gives y = b1x - b1x_girth + x_height. Plugging in the numbers gives y = 0.070x + 163.616
+
+b) The slope is 0.070 and the y intercept is 163.616 cm. as the slope is positive, there is a positive relationship/trend in 
+
+the data. For each cm increased in the shoulder girth it goes up a factor of 1.069. if there is no shoulder girth the average height 
+
+outcome would be about 56.4762 cm.
+
+c) R2= 0.672^2 = 0.45 so there is about 45% variation in the data from using the linear model.
+
+d) Using the equation from a) given 100cm, the predicted height is y = 163.38 cm
+
+e) The residual for the student actually being 160cm tall is e = 160cm – 163.38 cm = -3.376 cm as it is a negative residual it over estimates the height.
+
+f) No. extrapolation would be required.
+
+7.30
+
+a) heart_weight = 4.034*body_weight – 0.357
+
+b) when body weight, the heart weight on average is expected to be is -0.357. Not a realistic value just meant to accomdate the 
+
+model.
+
+c) the slope is roughly 4.034 which mean for each added body weight in kg, the heart weight goes up by a factor of 4.034.
+
+d) R2 = 0.6466 means 64.66% of the variability in the body weights for heart weights.
+
+e) Taking the square root of 0.6466 gives R = 0.8041
+
+7.40
+
+x_beauty = -0.0883
+
+x_score = 3.9983
+
+a) We can use the t-value and the Std. Error and using the null hypothesis $H_{0}$ = 0 meaning the slope or change in y/x is constant
+
+to solve for the estimated slope (point estimate).
+
+Using T = ($\beta$ - $H_{0}$) / SE and solving for $\beta$ gives $\beta$ = T * SE + $H_{0}$ and plugging in the numbers gives
+
+$\beta$ = 4.13*0.0322 = 0.130
+
+b) from a) we know that the slope is postive and can reject $H_{0}$ in favor of the alternative hypothesis $H_{A}$ != 0 and as the
+
+slope we estimated is postitive the correlation has to be constant as well, we can say there is evidence that the slope of the
+
+relationship between teaching evaluation and beauty is positive.
+
+c) Conditions for linear regression:
+
+1. Linearity
+
+2. Nearly normal residuals
+
+3. Constant variability
+
+4. Independent observations
+
+Plot 1 (beauty vs residuals): The residuals are large for the majority of beauty evaluations and shows a best fit model has too many 
+and doesn't sastify linear regression
+
+Plot 2: (frequency distribution of residuals): The condition is sastified as the plot looks nearly normal.
+
+Plot 3: (Normal Q-Q Plot): shows that the quantiles from both datasets come from somewhat similar distributions
+
+(normal distribution) and that the observations are independent so the condition is sastified.
+
+Plot 4: (order of data collection vs residuals): This plot shows a negative serial correlation as drawing the data points shows a 
+
+trend that goes up and down and shows there is no serial correlation and linear regression doesn't apply.

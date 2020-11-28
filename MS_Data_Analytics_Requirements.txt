@@ -1,0 +1,33 @@
+Required Courses
+
+Students must complete 27 credits in the following courses:
+
+DATA 600 - Information and Systems (3 Credits)
+DATA 602 - Advanced Programming Techniques (3 Credits)
+DATA 604 - Simulation and Modeling Techniques (3 Credits)
+DATA 605 - Fundamentals of Computational Mathematics (3 Credits)
+DATA 606 - Statistics and Probability for Data Analytics (3 Credits)
+DATA 607 - Data Acquisition and Management (3 Credits)
+DATA 608 - Knowledge and Visual Analytics (3 Credits)
+DATA 609 - Mathematical Modeling Techniques for Data Analytics (3 Credits)
+DATA 698 - Analytics Master's Research Project (3 Credits)
+
+Electives
+
+Students must also complete nine credits from among the following courses:
+
+DATA 610 - Project Management Concepts (3 Credits)
+DATA 611 - Overview of Current Technologies for Sustainability (3 Credits)
+DATA 613 - Managing Innovation and Strategy (3 Credits)
+DATA 617 - Data Exploration and Outlier Analysis (3 Credits)
+DATA 618 - Quantitative Finance (3 Credits)
+DATA 620 - Web Analytics (3 Credits)
+DATA 621 - Business Analytics and Data Mining (3 Credits)
+DATA 622 - Machine Learning and Big Data (3 Credits)
+DATA 624 - Predictive Analytics (3 Credits)
+DATA 630 - Urban Society and Sustainability (3 Credits)
+DATA 643 - Special Topics in Data Analytics (3 Credits)
+DATA 644 - Current Topics in Urban Sustainability: Energy (3 Credits)
+DATA 645 - Current Topics in Urban Sustainability: Transportation (3 Credits)
+DATA 646 - Current Topics in Urban Sustainability: Complex Systems (3 Credits)
+DATA 661 - Independent Study (1 - 3 Credits)

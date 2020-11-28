@@ -1,0 +1,16 @@
+DATA606-package         R Package to support DATA606 Statistics and
+                        Probabilty for Data Analytics.
+calc_streak             Calculate a streak.
+demo                    Demonstrates R Functionality
+getLabs                 Returns a list of available labs.
+hello                   Hello, World!
+normalPlot              Plot a normal distribution.
+onAttach                Function executed when the package is loaded.
+plot_ss                 Plot sum of squares.
+present                 Birth rates from 1940 to 2002
+qqnormsim               Simulates QQ-plots with the given data.
+sat                     SAT verbal and math scores
+shiny_demo              Run a Shiny App from a Package
+startLab                Starts a new lab.
+viewLab                 Opens the HTML page for the lab in the default
+                        browser.

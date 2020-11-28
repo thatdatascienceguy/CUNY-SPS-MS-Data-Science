@@ -1,0 +1,116 @@
+---
+title: "Homework 8"
+author: "Jonathan Hernandez"
+date: "April 26, 2018"
+output: html_document
+---
+
+8.2
+
+a) equation of regression line:
+
+given the slope estimate of parity and the estimate of the y-intercept the equation is
+
+weight = 120.07 – 1.93 parity
+
+b) The slope -1.93 means for every child not first born, we expect to see the weight decrease by 1.93.
+
+if a first born child that is parity = 0, then the average weight is 120.07 (assuming ounces or about 7.5 lbs)
+
+if not a first born child that is parity = 1, then the average weight is 118.14 ounces
+
+c) To see if the model shows a relationship between parity and birth weight, let's
+
+come up with a hypothesis
+
+let $H_{0}$: $\beta$ = 0 and $H_{A}$: $\beta$ != 0
+
+looking at the T value and p-value, the p-value is about 0.1 and thus it is not 
+
+significant enough or not enough to reject the null hypothesis and that whether a
+
+child is first born or not doesn't contribute to birth weight.
+
+8.4
+
+a) Equation of the regression line:
+
+$\hat{absent}$ = 18.93 - 9.11$\hat{eth}$ + 3.10$\hat{sex}$ + 2.15$\hat{lrn}$
+
+b) the slope $\beta_{1}$ = -9.11 means that it is predicted that a non aboriginal
+
+child will be absent average 9.11 days assuming all variables constant.
+
+the slope $\beta_{2}$ = 3.10 means that it is predicted that a male child will be
+
+absent average 3.10 days assuming all variables constant.
+
+the slope $\beta_{3}$ = 2.15 means that it is predicted that a child who is a 
+
+slow learner will be absent average 2.15 days
+
+c) the Residual is calculated as $e = y - \hat{y}$.
+
+in this case, y = 2 days and computing $\hat{y}$ from the model in a) gives
+
+$\hat{y}$ = $\hat{absent}$ = 18.93 - (9.11$*$ 0) + 3.10$*$ 1 + 2.1$*$ 1 = 24.13 days
+
+e = 2 - 24.13 = -22.13
+
+d) The Calculated $R^2$ and Adjusted $R^2$ can be calculated using the formulas 
+
+below:
+
+$R^2$ = 1 - var(e) / var(y) where var(e) is the variance of the residuals which
+
+in this problem is 240.57 and var(y) is the variance of the outcomes which is 
+
+264.17
+
+Plugging in the numbers gives $R^2$ = 1 - 240.57/264.17 = 0.089
+
+likewise finding $R^2_{adj}$ = $R^2$*(n-1/(n-k-1)) where n is the total number of
+
+observations and k is the number of predictor variables n = 146 and k = 3 which
+
+gives $R^2_{adj}$ = 0.089 * (145/142) = 0.091
+
+8.8
+
+Using backward elimination, we first start by looking at the variable with the highest adjusted $R^2$ which would be in this case the “No learner status” variable as it has the highest adjusted $R^2$ of 0.0723.
+
+8.16
+
+a) One thing that I’ve noticed in the dataset is that the higher temperature around 66 Fahrenheit there are hardly no damaged O-rings and hardly none above 70 degrees Fahrenheit.
+
+b) Looking at the table, we see that the y-intercept is estimated to be 11.6630 and the slope to be -0.2162. The slope means for each temperature change we expect the probability to decrease by a factory of 0.2162. The p-value for the estimates is near 0 which may indicate strong evidence to reject the null hypothesis and favor the alternative.
+
+c) The logistic model is:
+
+$logit(p/ 1- p) = 11.6630 – 0.2162*Temperature$
+
+d) The model should be able to classify as temperature increases, the probability should be close to 0 meaning that there is no damaged O-rings and as the temperature decreases probability goes to 1 meaning the possibility of a damaged O-rings is likely. The model does moderately capture this notion.
+
+8.18
+
+a) Using the model $logit(p/1-p) = 11.6630 – 0.2162*Temperature$ and that 
+
+Temperature = 51: p_51 = exp(11.6630-0.2162$*$ 51) / 1 + exp(11.6630-0.2162$*$51) = 0.654
+
+Temperature = 53: p_53 = exp(11.6630-0.2162$*$ 53) / 1 + exp(11.6630-0.2162$*$53) = 0.551
+
+Temperature = 55: p_55 = exp(11.6630-0.2162$*$ 55) / 1 + exp(11.6630-0.2162$*$55) = 0.443
+
+b)  Using the given model probabilities plot them:
+```{r challenger-disaster-prob, echo=TRUE}
+temperature <- c(51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71)
+est_prob <- c(0.654, 0.551, 0.443, 0.341, 0.251, 0.179, 0.124, 0.084, 0.056, 0.037, 0.024)
+plot(temperature, est_prob, type = 'o')
+```
+
+c) I don't have concerns applying the logistic regression model for this problem.
+
+It fits the scatterplot moderately stong and captures the idea that the higher
+
+the temperature, the smaller chance of a O-ring being damaged.
+

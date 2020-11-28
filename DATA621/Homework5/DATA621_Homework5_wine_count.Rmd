@@ -1,0 +1,405 @@
+---
+title: 'DATA621 Homework5: Predicting the number of Wine Sales'
+author: "Jonathan Hernandez"
+date: "July 12, 2018"
+output: pdf_document
+---
+
+## Introduction
+
+- This report will focus on given a dataset of commercially available wines and 
+
+will use the concept of count regression using Poisson regression, binomial 
+regression
+
+and multiple linear regression to predict wine sales. The more sales a company has
+
+selling wine, the more likley the wine will be sold to a high-class restaurant.
+
+First I will examine teh data, replace values if necessary and then build a few
+
+Poisson regression models, negative binomial regression models as well as 
+
+multiple regression models. As each observation of the wine dataset is on available
+
+wines, using count regression can help us predict how much wine cases will be brought
+
+given various properities.
+
+### The data
+
+- INDEX - Id variable
+
+- TARGET - Our response variable and the number of wine cases purchased
+
+- AcidIndex - Proprietary method of testing total acidity of wine by using 
+
+a weighted average
+
+- Alcohol - Alcohol content
+
+- Chlorides - Chloride content of wine
+
+- CitricAcid - Citric Acid Concent
+
+- Density - Density of Wine
+
+- FixedAcidity - Fixed Acidity of wine
+
+- FreeSulfurDioxide - Sulfur Dioxide content of wine
+
+- LabelAppeal - Marketing Score indicating the appeal of label design for consumers. 
+
+High numbers suggest customers like the label design. Negative numbers suggest customers
+
+don't like the design.
+
+- ResidualSugar - Residual Sugar of wine
+
+- STARS - Wine rating by a team of experts 4 Stars = Excellent, 1 Star = Poor
+
+- Sulphates - Sulfate content of wine
+
+- TotalSulfurDioxide - Total Sulfur Dioxide of wine
+
+- VolatileAcidity - Volatile Acid content of wine
+
+- pH - pH of wine
+
+## Data Preparation
+
+- Let us grab the data, and print out basic information like size, variable structure,
+
+and descriptive statistics and check if variables need to be fixed or any missing
+
+variables to be replaced or any outliers.
+
+```{r get-data, echo=FALSE, message=FALSE}
+if (!require(MASS)) install.packages("MASS", dependencies = TRUE)
+if (!require(ggplot2)) install.packages("ggplot2", dependencies = TRUE)
+if (!require(dplyr)) install.packages("dplyr", dependencies = TRUE)
+if (!require(caret)) install.packages("caret", dependencies = TRUE)
+if (!require(glmnet)) install.packages("glmnet", dependencies = TRUE)
+if (!require(tidyr)) install.packages("tidyr", dependencies = TRUE)
+if (!require(reshape2)) install.packages("reshape2", dependencies = TRUE)
+# load libraries
+library(ggplot2)
+library(dplyr)
+library(caret)
+library(glmnet)
+library(MASS)
+library(reshape2)
+wine <- read.csv("wine-training-data.csv")
+wine <- wine %>% select(-c(INDEX))
+str(wine)
+summary(wine)
+```
+
+- Some NA's exists, I will replace them with the median of each variable respectively.
+
+The median is less unaffected by outliers in the dataset.
+
+```{r replace-NA, echo=FALSE}
+# find columns that have at least 1 NA value
+cols_na <- colnames(wine)[colSums(is.na(wine)) > 0]
+# from those columns compute the mean and use those means to replace the NA's
+# in their respective column
+
+# with the mean found replace the NA's
+for(i in cols_na){
+  wine[is.na(wine[, i]), i] <- median(wine[, i], na.rm = TRUE)
+}
+```
+
+- Since I have replaced the NA values in the STARS variable with the average of
+
+ratings (2.042), I'll convert it to an integer to return 2 as the rating. (code
+
+in the appendix)
+
+```{r integer-rating, echo=FALSE}
+wine$STARS <- as.integer(wine$STARS)
+```
+
+## Data Exploration
+
+- Let's do some histograms and contingency tables and descriptive statistics to see
+
+how the data behaves and examine any outliers if any.
+
+```{r EDA, echo=FALSE}
+# get histogram of the numerical/integer data, strip off un-needed details
+# to get people to see the picture better
+ggplot(gather(wine), aes(x=value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~ key, scales = "free") +
+  theme_bw() +
+  theme_classic() +
+  ggtitle("Histogram of All Attributes of the wine dataset") +
+  theme(axis.title = element_blank(), axis.text = element_text(size = 6))
+```
+
+- Majority of the variables are nearly normal besides the TARGET variable.
+
+Replacing the NA's by the mean makes the peak of the histogram increase.
+
+## Build Models
+
+- I will build some Poisson regression models and multiple linear regression models
+
+Let's start with Poisson regression models using all features.
+
+```{r poismodel1, echo=FALSE}
+# use glm with the poisson method
+pois_lm_wine1 <- glm(TARGET ~., data = wine, family = "poisson")
+summary(pois_lm_wine1)
+```
+
+- This model by looking at the summary output shows alot of the variables are
+
+well significant. Coefficents such as STARS, Alcohol are positive and makes sense
+
+as higher the rating, more likley the amount of wine cases will be brought and more
+
+alcohol (not too much) the more someone will want to buy the wine. LabelAppeal being
+
+positive also makes sense as the more popular the brand is, the more likley it will
+
+catch someone's interest.
+
+- Lets make another Poisson model but reduce the amount of variables if possible
+
+using backward elimination.
+
+```{r poismodel2, echo=FALSE}
+# use the stepAIC function with the full model to remove variables using
+# backward selection
+pois_lm_wine2 <- glm(TARGET ~.,data = wine, family = "poisson")
+pois_lm_wine2 <- stepAIC(pois_lm_wine2, direction = "backward", trace = FALSE)
+summary(pois_lm_wine2)
+```
+
+- This model shows similar characteristics as the first Poisson model but with the 
+
+FixedAcidity and ResidualSugar features removed. Those had high p-values and backward
+
+elimination removed them as insignificant and not needed in the model. The coefficents
+
+in this 2nd model are roughly the same and their AIC (Alkaine Information Criteron) is
+
+almost identical. Removing the Residual Sugar in my opinion makes sense as I feel
+
+that when I look for wine I don't expect to account for sugar and feel vendors shouldn't either.
+
+- Final Poisson model will be using the LASSO regression 
+
+(Least Absolute Shrinkage Selection Operatior) to do feature selection and minimize
+
+overfitting if any.
+
+```{r, poismodel3, echo=FALSE}
+# use cv.glmnet to get the lambda parameter that is sufficent for penalizing
+# overfitting terms
+# while binary logistic regression uses missclassification error when finding
+# lambda, poisson regression relies on either the mean square error or deviance
+cv.fit <- cv.glmnet(data.matrix(wine[, c(2:15)]),
+                            y = wine$TARGET, family = "poisson",
+                            type.measure = "mse")
+# print value of lambda to minimize overfitting and 1 standard error from it
+print("Lambda Minimum and Lambda 1 standard error from the minimum:")
+c(cv.fit$lambda.min, cv.fit$lambda.1se)
+
+# plot mean squared error vs log of lambda values and see the number of features
+# needed
+plot(cv.fit)
+
+# use the lambda 1 standard error from the minimum value to make the poisson model
+pois_lm_wine3 <- glmnet(data.matrix(wine[, c(2:15)]),
+                          y = wine$TARGET, family = "poisson", 
+                      alpha = 1, lambda = cv.fit$lambda.min)
+
+#coefficents
+coef(pois_lm_wine3, s = "lambda.min")
+
+# computing the AIC
+k <- pois_lm_wine3$df # number of features, degrees of freedom
+loglikhood <- pois_lm_wine3$nulldev - deviance(pois_lm_wine3) # log-likihood
+AICc <- -2*loglikhood + 2*k
+print(paste("AIC: ",AICc))
+```
+
+- With the LASSO technique using the minimum lambda value,the same 2 coefficents
+
+again don't make the cut and the sign of the coefficents are the same as the previous
+
+model. I could have instead use the "lambda.1se" as my lambda parameter reducing
+
+the variables to only about 4 however important variable such as Alcohol were set
+
+to 0 and as I strongly feel that the feature Alcohol is imoprtant, I will not use
+
+the model.
+
+- Let's now use multiple linear regression to estimate the amount of wine cases
+
+purchased. First model will include all variables
+
+```{r multlin-regression, echo=FALSE}
+mult_lin_lm_wine1 <- lm(TARGET ~., data = wine)
+summary(mult_lin_lm_wine1)
+
+# diagonstic plots
+par(mfrow=c(2,2))
+plot(mult_lin_lm_wine1)
+hist(mult_lin_lm_wine1$residuals, xlab = "", ylab = "",
+     main = "Histogram of residuals")
+```
+
+- We see from the summary of using all variables that the $R_{adj}^2$ is low and 
+
+the coefficent signs match as well. However looking at the histogram of residuals
+
+and the diagonistic plots that this model doesn't fit the data quite well.
+
+- Next multiple regression and weights = $1/(|\hat{y}_{TARGET}|)^2$
+
+```{r multlin-regression2, echo=FALSE}
+# make predictions off the first model and use those as weights
+pred_wine <- predict(mult_lin_lm_wine1, newdata=wine)
+mult_lin_lm_wine2 <- lm(TARGET ~ VolatileAcidity + CitricAcid + Chlorides +
+                          FreeSulfurDioxide + TotalSulfurDioxide + Density + pH +
+                          Sulphates + Alcohol + LabelAppeal + AcidIndex + STARS,
+                        data = wine, weights = 1/abs(pred_wine)^2)
+
+# summarize this newly multiple regression model
+summary(mult_lin_lm_wine2)
+# diagonstic plots
+par(mfrow=c(2,2))
+plot(mult_lin_lm_wine2)
+hist(mult_lin_lm_wine2$residuals, xlab = "", ylab = "",
+     main = "Histogram of residuals")
+```
+
+- Coefficent signs match and the $R_{adj}^2$ are much better than the previous
+
+multiple regression and the Residual standard error is much smaller. We also see
+
+that 2 more variables are deemed insignificant according to the model: Density and
+
+pH. An average person would only care about how much alcohol and acidity and label
+
+wine has and wouldn't care about density and pH levels so this model makes sense to
+
+not have those variables.
+
+- Finally, let's look at Negative binomial regression models to see which one is
+
+best for predicting the number of sales.
+
+```{r neg-binomial1, echo=FALSE}
+# use R MASS package to use the function glm.nb to make a negative binomial model
+neg_bin_wine <- glm.nb(TARGET ~., data = wine)
+summary(neg_bin_wine)
+```
+
+- Negative binomial regression using all variables yields similar results like
+
+the poisson regression models. The coefficents are approximately equal and the AIC
+
+values are almost the same.
+
+- Let's look at another negative binomial regression model by manually choosing
+
+features such as, STARS, Alcohol, LabelAppeal and the Acidity features:
+
+FixedAcidity, VolatileAcidity, CitricAcid, AcidIndex
+
+```{r neg-binomial2, echo=FALSE}
+# negative binomail regression model manually selecing features
+neg_bin_wine2 <- glm.nb(TARGET ~ STARS + Alcohol + LabelAppeal + FixedAcidity +
+                          VolatileAcidity + CitricAcid + AcidIndex ,data = wine)
+
+summary(neg_bin_wine2)
+```
+
+- This model has FixedAcidity as a insignificant coefficent and the coefficent signs
+
+are exactly the same as all other models. STARS and LabelAppeal have the highest
+
+coefficent values meaning all other variables held constant, these two have the 
+
+largest impact on increasing wine box counts. The AIC and Theta parameter are nearly
+
+the same as well.
+
+## Select Models
+
+- One thing about all these models is that the FixedAcidity and ResidualSugar
+
+features were show to have high p-values which makes them insignificant in building
+
+a good decent model. The Coefficents signs were all the same. Also as mentioned
+
+before, the STARS and LabelAppear had the highest coefficent value which I feel
+
+makes sense as the more better the rating and popular brand, the more wine cases
+
+people/vendors will buy. Alcohol amount based on the models is expected to increase
+
+the wine count slighly but not a strong factor as rating and label appeal.
+
+- Picking the model I will select the poisson regression model 3 that is the one
+
+that uses LASSO to prevent overfitting and has the lowest AIC value. While the 
+
+multiple regression model that used weights based on predicted values and had a 
+
+high $R_{adj}^2$, the diagonstic plots didn't seem to adhere to linear regression
+
+rules.
+
+- Evaluating the performance regression model using mean squared error, F-Statistic,
+
+- Mean squared Error
+
+```{r mse, echo=FALSE}
+mse <- cv.fit$cvm[cv.fit$lambda == cv.fit$lambda.min]
+mse
+```
+
+- $R_{adj}^2$
+
+```{r r-squared, echo=FALSE}
+R_squared <- 1 - cv.fit$cvm[cv.fit$lambda == cv.fit$lambda.min] / var(wine$TARGET)
+R_squared
+```
+
+- Predicted Wine counts using the wine evaluation dataset with our poission
+
+regression model:
+
+```{r evalmodel, echo=FALSE}
+wine_eval <- read.csv("wine-evaluation-data.csv")
+wine_eval <- wine_eval %>% select(-c(IN))
+
+# columns besides TARGET with NA's in evaluation dataset
+cols_na2 <- colnames(wine_eval)[colSums(is.na(wine_eval)) > 0]
+cols_na2 
+
+# with the mean found replace the NA's
+for(i in cols_na2[2:9]){
+  wine_eval[is.na(wine_eval[, i]), i] <- median(wine_eval[, i], na.rm = TRUE)
+}
+
+# make predictions on the evaluation dataset
+wine_count_predictions <- predict(pois_lm_wine3,
+                                  newx=data.matrix(wine_eval[,2:15]), type = "response",
+                                  s = cv.fit$lambda.min)
+wine_count_predictions
+```
+
+- Appendix of R code
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```

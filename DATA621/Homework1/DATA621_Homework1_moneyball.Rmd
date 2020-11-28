@@ -1,0 +1,336 @@
+---
+title: "DATA621 Homework1 (Moneyball)"
+author: "Jonathan Hernandez"
+date: "June 5, 2018"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+This assignment focuses looking at the moneyball training data set and examining
+
+which variables are the best predictors for predicting team wins. I will look at
+
+statistics such as mean median and standard deviation, visual plots and examining
+
+any outliers if any. I will use the concept of multivariate regression to create
+
+models that best predict the team wins. Statistics like adjusted $R^2$, residual
+
+plots and p-values will be considered when picking the best model and predictors.
+
+## Data Preparation
+
+Lets look and see what are some of the missing values and try replacing them with
+
+the mean for each column.
+
+```{r get-data, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+moneyball <- read.csv("moneyball-training-data.csv")
+```
+
+- Missing values replacement, I decided to replace the NA's with the mean for each
+
+column. It is straightforward and a easy estimator to use.
+
+```{r means, echo=FALSE}
+means <- apply(moneyball,2,mean, na.rm = TRUE)
+
+# replace NA's with the mean
+for (i in 2:ncol(moneyball)){
+  moneyball[is.na(moneyball[, i]), i] <- means[i]
+}
+```
+
+- Another thing is to clean up for better readability are the variable names. I'll
+
+be removing the "TEAM_" and index as the Index is not needed and we know the 
+
+dataset has data based on a particular team. See new names below
+
+```{r remove-cols, echo=FALSE}
+moneyball <- moneyball %>% select(-c("INDEX"))
+
+# remove "TEAM_" from each column
+colnames(moneyball) <- gsub("TEAM_", "", colnames(moneyball))
+names(moneyball)
+```
+
+## Data Exploration
+
+- With the data cleaned to our liking, lets do some sample plots to better 
+
+understand how the data behave. For example, what kind of distrubution do the 
+
+data follow? What are the mean, median and standard deviation, can we find some
+
+correlation coefficients between the Wins and other variables? Let's see.
+
+```{r simple-plots, echo=FALSE}
+# sample plots use ggplot2 and geom_histogram
+histograms <- moneyball %>% gather()
+ggplot(gather(moneyball), aes(value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~key, scales = 'free_x') +
+  xlab(element_blank()) +
+  ylab(element_blank()) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), panel.border = element_blank(),
+        axis.title = element_blank(), axis.text =element_text(size = 8)) +
+  ggtitle("Distribution of variables in Moneyball Dataset")
+```
+
+- Calculating the mean, median and standard deviation which will understand the
+
+average, middle and variability we have in our data.
+```{r summary-stats, echo=FALSE}
+apply(moneyball, 2, mean)
+apply(moneyball, 2, median)
+apply(moneyball, 2, sd)
+```
+
+- We see that some of the variables are normally distributed, others left or
+
+right-skewed. This could also give us an idea of what our trained linear models
+
+will predict for a team's wins.
+
+## Building a Model - Multiple Linear Regression
+
+- Let us now start building linear models. I will
+
+use the idea of backward selection and forward selection using the p-value for 
+
+judgement.By eliminating variables with high p-values we are removing variables 
+
+where we would not fail to reject the null hypothesis. This should also give us 
+
+a moderate $R^2_{adj}$ value. Also I will try using the adjusted $R^2$ value as a
+
+statistic using also the selection techinques to grab two more models.
+
+Let's start will all variables and see how valid is this model it is of the form
+
+\[
+\begin{aligned}
+  \widehat{team\_wins} = \beta_0 + \beta_1*\widehat{basehits} + \beta_2*\widehat{doubles} + 
+  \beta_3*\widehat{triples} + \\ \beta_4*\widehat{homeruns} + \beta_5*\widehat{walks} + 
+  \beta_6*\widehat{hitbypitch} + \beta_7*\widehat{strikeouts} + \\
+  \beta_8*\widehat{stolenbases} + \beta_9*\widehat{caughtstealing} + 
+  \beta_{10}*\widehat{errors} + \beta_{11}*\widehat{doubleplays} + \\ + 
+  \beta_{12}*\widehat{walksallow} + \beta_{13}*\widehat{hitsallow} +
+  \beta_{14}*\widehat{homerunsallow} + \\ \beta_{15}*\widehat{strikeouts\_pitch}
+\end{aligned}
+\]
+
+```{r inital-model, echo=FALSE}
+# build a model containing all the variables to predict team wins
+default_lm_moneyball <- lm(TARGET_WINS ~ ., data = moneyball)
+summary(default_lm_moneyball)
+```
+
+- Here we see the estimated beta values for each variable and p-value as well as
+
+the $R^2$ and $R^2_{adj}$.
+
+- Lets look at the first model using backward elimination (looking at the variable 
+with the highest p-value, removing it
+
+repeat until all variables have a low p-value below 0.05). We go back to the model
+
+table and see we can eliminate the following variables in the order below: 
+
+- PITCHING_BB, PITCHING_HR, BASERUN_CS, BATTING_HBP
+
+```{r model1, echo=FALSE}
+model1_moneyball <- lm(TARGET_WINS ~ BATTING_H + BATTING_2B + BATTING_3B +
+                         BATTING_HR + BATTING_SO + BASERUN_SB +
+                         PITCHING_SO + FIELDING_E + FIELDING_DP +
+                         BATTING_BB + PITCHING_H, 
+                       data = moneyball)
+summary(model1_moneyball)
+```
+
+- Having this model has estimates of low p-values and even though the $R^2$ and
+
+$R^2_{adj}$ didn't change much our variables have estimated low p-values.
+
+To me I am confident using this model to use as I feel that getting strikeouts, 
+errors, and
+
+letting the opposing team get hits can affect how the team will win and having these
+
+values too high I think will not make a team have many wins; you need not only
+
+a good offense but a good defense as well. The 3 variables in my last sentence have
+
+negative estimated coefficents which makes sense; more strikeouts/errors/hits 
+allowed,
+
+the less wins a team is estimated to have.
+
+- Model #2: For my second model, I will manually pickout the variables I want to 
+
+include and will go off based on what I think contributes to a winning team.
+
+The variables I will use are 
+
+* BATTING_H
+
+* BATTING_2B
+
+* BATTING_3B
+
+* BATTING_HR
+
+* BATTING_BB
+
+* BATTING_HBP
+
+* BASERUN_SB
+
+* FIELDING_DP
+
+* PITCHING_SO
+
+```{r model2, echo=FALSE}
+model2_moneyball <- lm(TARGET_WINS ~ BATTING_H + BATTING_2B + BATTING_3B + 
+                         BATTING_HR + BATTING_BB + BATTING_HBP + BASERUN_SB + 
+                         FIELDING_DP + PITCHING_SO, data = moneyball)
+summary(model2_moneyball)
+```
+
+- Looking at this second model, the $R^2$ and $R^2_{adj}$ decreased and looking
+
+at the coefficents, it indicates that hitting more doubles decreases wins slowly
+
+and getting more double plays decreases wins as well. Even using backward elimination
+
+will make all coefficents more positive, but will leave out variables regarding
+
+defense which I don't feel confident as I believe the best model and to account for
+
+in real-life baseball is to have both offense and defense.
+
+
+- For my 3rd and final model. I will use even less variables that not only
+constitute to
+
+getting many wins but such that the sign of the coefficent of each variable makes
+
+sense (negative coefficent for batting strikeouts, postive coefficent for homeruns etc.)
+
+* BATTING_H
+
+* BATTING_HR
+
+* BASERUN_SB
+
+* BATTING_SO
+
+* FIELDING_DP
+
+* PITCHING_BB
+
+* PITCHING_H
+
+* PITCHING_HR
+
+* PITCHING_SO
+
+```{r model3, echo=FALSE}
+model3_moneyball <- lm(TARGET_WINS ~ BATTING_H  + BATTING_HR +
+                         BASERUN_SB + BATTING_SO + FIELDING_DP + PITCHING_BB +
+                         PITCHING_H + PITCHING_HR + PITCHING_SO,
+                       data = moneyball)
+summary(model3_moneyball)
+```
+
+- This model I feel doesn't make as much sense as it is saying that more double
+
+plays a team gets the less wins and in reality, getting double plays is great
+
+defensive work and strategy. Also it shows that allowing more walks increases the
+
+wins by a small amount which I disagree as allowing walks can help the opposing team
+
+make comebacks and more likley to get an RBI and win.
+
+- Out of the 3 models although they are counter-intitutive in some way, a model
+
+will have to be selected.
+
+## Selected Model
+
+- Each of the 3 models I went off based on p-value as ones with a high p-value
+
+I can reject the null hypothesis ($H_0$: p = 0) and favor the alternative ($H_A$:
+p != 0) and 
+
+eliminate that variable.
+
+- Out of the 3 models, I will select the first one that was based on backward elimination.
+
+I am going by this as after using the p-values, I want to use other statistics like
+
+$R^2$ and $R^2_{adj}$ and the first model has the highest $R^2_{adj}$ = 0.3186.
+
+My first model has predictors that take into account both batting and pitching and
+
+reasonable signs in the coefficients.
+
+- The model selected is the equation below (rounded to the nearest thousandth)
+
+\[
+\begin{aligned}
+  \widehat{team\_wins} = 23.6667 + 0.0485*\widehat{basehits} -0.0205*\widehat{doubles} + 
+  0.0625*\widehat{triples} + \\ 0.0698*\widehat{homeruns} + 0.0107*\widehat{walks}
+   -0.0093\widehat{strikeouts} + \\ 0.0288*\widehat{stolenbases} 
+ -0.0206*\widehat{errors} -0.1210*\widehat{doubleplays} \\
+ -0.0007*\widehat{hitsallow}
+\end{aligned}
+\]
+
+```{r evaluate-model, echo=FALSE}
+# fitting the values in our model with the evaluation data
+plot(predict(model1_moneyball), moneyball$TARGET_WINS)
+abline(model1_moneyball)
+par(mfrow=c(2,2))
+plot(model1_moneyball)
+```
+
+The F-score, $R^2$ and RMSE (Root Mean Squared Error) below:
+```{r model-stats, echo=FALSE}
+c(summary(model1_moneyball)$fstatistic, summary(model1_moneyball)$adj.r.squared,
+  mean(summary(model1_moneyball)$residuals^2))
+```
+
+- Histogram of residuals and normal probability plot and residuals vs fitted values
+
+```{r plot-hist, echo=FALSE}
+hist(model1_moneyball$residuals)
+```
+
+- While the model does not fit the data that great, based on what we have is something
+
+I will use as our model for predicting wins for a particular team. It is the model
+
+with p-values very low which is what I am going after as well as the best $R^2$ value.
+
+- Making the predictions for the evaluation data set:
+
+```{r evaluation, echo=FALSE}
+eval_moneyball <- read.csv("moneyball-evaluation-data.csv")
+
+# remove "TEAM_" from each column
+colnames(eval_moneyball) <- gsub("TEAM_", "", colnames(eval_moneyball))
+predict(model1_moneyball,eval_moneyball)
+```
+
+- Appendix of R code
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```

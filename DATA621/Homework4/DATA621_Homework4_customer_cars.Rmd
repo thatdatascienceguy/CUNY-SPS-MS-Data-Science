@@ -1,0 +1,486 @@
+---
+title: 'DATA621 Homework4: Predicting The Probability of a Customer Getting Into a
+  Car Crash and the Cost'
+author: "Jonathan Hernandez"
+date: "July 3, 2018"
+output:
+  pdf_document: default
+---
+
+# Predicting The Probability of a Customer Getting Into a Car Crash and the Cost
+
+- This report will examine a dataset containing customer information at a auto
+
+- insurance company. I will look at several models and decide which ones are the best
+for 
+
+- Predicting if a customer getting into a car crash and
+
+- Predicting the amount it will cost the customer if they are in the crash
+
+- Mutliple linear regression and Binary logistic regression models will be looked at
+
+- to see which are the better predictors of the response variables. The response
+
+- variables TARGET_FLAG and TARGET_AMT are if the customer was in a crash or not and
+
+- TARGET_AMT was how much is the cost of the crash respectively.
+
+## Data Preparation
+
+- Let's look at the data at hand to see what we are working with and to proceed
+
+accordingly.
+
+```{r load-libraries-and-data, echo=FALSE, message=FALSE}
+if (!require(MASS)) install.packages("MASS", dependencies = TRUE)
+if (!require(ggplot2)) install.packages("ggplot2", dependencies = TRUE)
+if (!require(dplyr)) install.packages("dplyr", dependencies = TRUE)
+if (!require(caret)) install.packages("caret", dependencies = TRUE)
+if (!require(glmnet)) install.packages("glmnet", dependencies = TRUE)
+if (!require(tidyr)) install.packages("tidyr", dependencies = TRUE)
+# load libraries
+library(ggplot2)
+library(dplyr)
+library(caret)
+library(glmnet)
+library(MASS)
+# load dataset (training data)
+insurance_train <- read.csv("insurance_training_data.csv")
+```
+
+- Examine the data and its structure to see if any changes are needed
+
+```{r structure-data, echo=FALSE}
+str(insurance_train)
+```
+
+- Get number of rows and columns
+
+```{r, echo=FALSE}
+dim(insurance_train)
+```
+
+- Get summary of the data see if there are any NA's or values that could be errors
+
+and/or outliers
+
+```{r summary-data, echo=FALSE}
+summary(insurance_train)
+```
+
+- We see that there are quite a few NA values here and I could potentially replace
+
+them with the mean of the attribute.
+
+- Also, some variables will need a variable type change such as 
+  
+  + TARGET_FLAG
+  
+  + INCOME
+  
+  + HOME_VAL
+  
+  + BLUEBOOK
+  
+  + OLDCLAIM
+
+- The first two variables the response variables will later have to be switched
+
+to factors and the last four variables will have to be converted to numerics to
+
+do histograms and computation and usage in the formulas to come.
+
+- Also some values look to be errors and should be converted to meaningful values.
+
+- I will first change the variable type for INCOME, HOME_VAL, BLUEBOOK and OLDCLAIM
+
+to be numeric/floating point numbers
+
+```{r factor-to-numeric, echo=FALSE, message=FALSE}
+# remove the '$' and ',' in the INCOME, HOME_VAL and BLUEBOOK and OLDCLAIM for
+# analysis
+
+insurance_train$INCOME <- as.numeric(gsub('\\$|,', '', insurance_train$INCOME))
+insurance_train$HOME_VAL <- as.numeric(gsub('\\$|,', '', insurance_train$HOME_VAL))
+insurance_train$BLUEBOOK <- as.numeric(gsub('\\$|,', '', insurance_train$BLUEBOOK))
+insurance_train$OLDCLAIM <- as.numeric(gsub('\\$|,', '', insurance_train$OLDCLAIM))
+```
+
+- Next we replace the NA's of each column to be the mean of the columns that have
+
+NA's in them.
+
+```{r replace-NA, echo=FALSE}
+# mean of each column dealing with currency
+cols_na <- c("INCOME", "HOME_VAL", "BLUEBOOK", "OLDCLAIM", "AGE", "YOJ", "CAR_AGE")
+means <- apply(insurance_train[, cols_na],
+               2, mean, na.rm = TRUE)
+
+insurance_train$INCOME <- insurance_train$INCOME %>% replace_na(means[1])
+insurance_train$HOME_VAL <- insurance_train$HOME_VAL %>% replace_na(means[2])
+insurance_train$BLUEBOOK <- insurance_train$BLUEBOOK %>% replace_na(means[3])
+insurance_train$OLDCLAIM <- insurance_train$OLDCLAIM %>% replace_na(means[4])
+insurance_train$AGE <- insurance_train$AGE %>% replace_na(means[5])
+insurance_train$YOJ <- insurance_train$YOJ %>% replace_na(means[6])
+insurance_train$CAR_AGE <- insurance_train$CAR_AGE %>% replace_na(means[7])
+```
+
+- We can see that there is an outlier in the CAR_AGE column, there is a -3 and 
+
+while the other values are all positive value. Having 0 can be intrepreted as 
+
+a car that is less than a year old. We'll make the -3 to 0 rather than omit it so
+
+we don't lose out on information.
+
+```{r, echo=FALSE}
+insurance_train$CAR_AGE[insurance_train$CAR_AGE == -3] <- 0
+```
+
+- The categorical variables MSTATUS, SEX, EDUCATION, JOB, CAR_TYPE, and URBANICITY
+
+have some values have "z_" in them; they can be taken out so it is easier to 
+
+understand the data.
+
+```{r remove-z, echo=FALSE}
+# categorical variables to have z_ in the value replaced
+categorical_vars <- 
+  c("MSTATUS", "SEX", "EDUCATION", "JOB", "CAR_TYPE", "URBANICITY")
+
+# replace the z_ with the empty string using apply and gsub
+ insurance_train[, categorical_vars] <-
+   apply(insurance_train[, categorical_vars], 2, 
+         function(x) as.factor(gsub("z_", "", x)))
+ 
+ insurance_train[, categorical_vars] <- lapply(insurance_train[, categorical_vars],
+                                               factor)
+# replace "" a factor label in JOB and replace with other to mean other jobs
+levels(insurance_train$JOB)[levels(insurance_train$JOB) == ""] <- "Other"
+```
+
+## Data Exploration
+
+- With the data ready, lets do some plots/histograms to see how our data behave,
+
+get an idea what distribution the features follow and see the data for users who
+
+were in a crash and those who were not.
+
+```{r plot-hist-data, echo=FALSE, warning=FALSE}
+# get histogram of the numerical/integer data first
+ggplot(gather(insurance_train[, c(2:7, 15, 18, 22, 24:25)]), aes(x=value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~ key, scales = "free") +
+  theme_bw() +
+  theme_classic() +
+  ggtitle("Histogram of All Numerical Attributes") +
+  theme(axis.title = element_blank(), axis.text =element_text(size = 6))
+
+# get plot of the categorical variables
+ggplot(gather(insurance_train[, c(9, 11:14, 16, 19:20, 23, 26)]), aes(x=value)) +
+  geom_bar() +
+  facet_wrap(~ key, scales = "free") +
+  theme_bw() +
+  theme_classic() +
+  ggtitle("Histogram of All Categorical Attributes") +
+  theme(axis.title = element_blank(), axis.text =element_text(size = 6),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Build Models
+
+- Let's build our multiple linear regression and logistic binary regression to 
+
+predict the amount cost for a car crash and if a person was in one or not respectively.
+
+- The first linear regression model will be using weighted linear regression that
+
+is applying weighted values.
+
+```{r model1, echo=FALSE}
+# get rid of the index it is no use to us for this analysis
+insurance_train <- insurance_train %>% select(-c(INDEX))
+
+# use a model that includes all variables and do a prediction
+# the squared inverse of these predictions will be used as weights for the features
+lm1_insurance <- lm(TARGET_AMT ~., data = insurance_train)
+pred <- predict(lm1_insurance, newdata=insurance_train) # make predictions
+
+# re-fit model but using weights
+lm1_insurance <- lm(TARGET_AMT ~., data = insurance_train, weights = abs(pred))
+
+summary(lm1_insurance)
+par(mfrow=c(2,2))
+plot(lm1_insurance)
+```
+
+- Model 2 is the usage of backward elimination to see which variables to eliminate
+
+with high p-values
+
+```{r model2, echo=FALSE}
+lm2_insurance <- step(lm1_insurance, direction = "backward", trace = FALSE)
+summary(lm2_insurance)
+par(mfrow=c(2,2))
+plot(lm2_insurance)
+```
+
+### Making Binary Logistic Regression Models
+
+- First Binary Logistic Regression model will be using the step() function to select
+
+features using backward selection and then doing a logistic 
+
+regression.
+
+```{r logistic1, echo=FALSE}
+# make a logistic regression model then use step() to see which variables
+# are most desirable to be used
+
+insurance_train_subset <- insurance_train %>% select(-c(TARGET_AMT))
+lm1_log_insurance <- glm(TARGET_FLAG ~.,
+                         data = insurance_train_subset, family = "binomial")
+lm1_log_insurance <- stepAIC(lm1_log_insurance, direction = "backward", trace = FALSE)
+summary(lm1_log_insurance)
+```
+
+- Using Backward elimination for logistic regression gives reduced variables and
+
+converges quite fast. Let's try another model and
+
+the coefficents and y-intercept are below. This is using the LASSO regression
+
+techinque which prevents overfitting and penalizes coefficents in the model.
+
+```{r logistic2, echo=FALSE}
+lm2_log_insurance <- cv.glmnet(data.matrix(insurance_train[, c(3:25)]),
+                            y = insurance_train$TARGET_FLAG, family = "binomial",
+                            type.measure = "class")
+# coefficents
+plot(lm2_log_insurance)
+
+fit <- glmnet(data.matrix(insurance_train[, c(3:25)]),
+                          y = insurance_train$TARGET_FLAG, family = "binomial", 
+      
+                      alpha = 1, lambda = lm2_log_insurance$lambda.1se)
+
+# Fitted coefficents
+fit$a0
+fit$beta[,1][fit$beta[,1] != 0]
+
+# computing the AIC
+k <- fit$df # number of features, degrees of freedom
+loglikhood <- fit$nulldev - deviance(fit) # log-likihood
+AICc <- -2*loglikhood + 2*k
+AICc
+```
+
+- This model tells us that around 18 variables will make this model have minimum
+
+missclassification error rate and provide a good value for lambda the regularization
+
+parameter. This model looks good some variables were removed and one that I think that 
+
+should have been removed was the AGE variable. I strongly believe that age plays
+
+a factor in car crashes. Usually 20-30 is a high chance as well as seniors (60+)
+
+Also I believe the RED_CAR is not relevant; it should not matter if the car was a 
+
+red car or not.
+
+- Model 3 I will manually select variables I think would best contribute to predicting
+
+if someone was in a car crash or not. They are:
+
+  - AGE
+  
+  - CAR_USE
+  
+  - CLM_FREQ
+  
+  - KIDSDRIV
+  
+  - MVR_PTS
+  
+  - OLDCLAIM
+  
+  - REVOKED
+  
+  - SEX
+  
+  - TIF
+  
+  - TRAVTIME
+  
+- Other factors like type of job, education, type of car, value of car in my
+
+opinion don't contribute to car crashes or lack thereof. Any educated person can
+
+be in a car crash and crashes often happen regardless of the value of car.
+
+```{r logistic3, echo=FALSE}
+lm3_model_insurance <- glm(TARGET_FLAG ~ AGE + CAR_USE + CLM_FREQ +
+                             KIDSDRIV + MVR_PTS + OLDCLAIM + REVOKED + SEX + TIF +
+                             TRAVTIME, data = insurance_train, family = "binomial")
+
+summary(lm3_model_insurance)
+```
+
+## Selecting Models
+
+- For the logistic regression I will be selecting Model 2 that is using the LASSO
+
+regularization technique using glmnet/cv.glmnet functions. The AIC is the lowest
+
+out of the three and one thing that I have noticed is that the variables that you
+
+think would make the cut is not always the best model. Some variables were left out
+
+as mentioned previously but from experience using LASSO with regularization gives good
+
+classification and accuracy.
+
+- For the multiple linear regression model, a tough decision but I will go with 
+
+model 2 that is the weighted least squares with backward elimination. This results
+
+in less features a slighly but barely higher $R_{adj}^2$. The $R_{adj}^2$ isn't
+
+the best and feel that more advanced non-linear techniques need to be learned and can
+
+maybe provide a better estimation.
+
+- Let's evaluate the multiple linear regression model # 2 on the training dataset
+
+a. Mean Squared Error (MSE)
+
+```{r mse, echo=FALSE}
+sm <- summary(lm2_insurance)
+mse <- mean(sm$residuals^2)
+mse
+```
+
+b. $R^2$ (or $R_{adj}^2$)
+
+```{r r-squared, echo=FALSE}
+sm$r.squared
+```
+
+c. F-Statistic
+
+```{r f-stat, echo=FALSE}
+sm$fstatistic[1]
+```
+
+d. Residual Plots
+
+```{r res-plots, echo=FALSE}
+par(mfrow=c(2,2))
+plot(lm2_insurance)
+```
+
+- Evaluating the binary logistic regression model using the training set.
+
+```{r evaluation, echo=FALSE}
+# predict on the training data to compute stats
+predict_train <- predict(fit, type = "class", newx = data.matrix(insurance_train[,3:25]),
+                         s = "lambda.1se")
+table(predict_train)
+table(insurance_train$TARGET_FLAG)
+
+conf_matrix <- confusionMatrix(factor(predict_train), factor(insurance_train$TARGET_FLAG), 
+                                positive = "1")
+conf_matrix
+conf_matrix_table <- conf_matrix$table
+```
+
+- F1 Score:
+
+```{r f1, echo=FALSE}
+f1 <- (2 * precision(conf_matrix_table) * sensitivity(conf_matrix_table)) / 
+  (precision(conf_matrix_table) + specificity(conf_matrix_table))
+f1
+```
+
+- Classification error rate
+
+```{r class-eror-rate, echo=FALSE}
+error_rate <- 1 - conf_matrix$overall['Accuracy'] # extract accuracy
+names(error_rate) = "Classification error rate"
+error_rate
+```
+
+- Precision
+
+```{r precision, echo=FALSE}
+precision(conf_matrix_table)
+```
+
+- Predict using the evaluation dataset
+
+```{r data-cleanup-on-eval, echo=FALSE}
+# clean the eval dataset the same as the training dataset
+insurance_eval <- read.csv("insurance-evaluation-data.csv")
+insurance_eval <- insurance_eval %>% select(-c(INDEX)) 
+insurance_eval$INCOME <- as.numeric(gsub('\\$|,', '', insurance_eval$INCOME))
+insurance_eval$HOME_VAL <- as.numeric(gsub('\\$|,', '', insurance_eval$HOME_VAL))
+insurance_eval$BLUEBOOK <- as.numeric(gsub('\\$|,', '', insurance_eval$BLUEBOOK))
+insurance_eval$OLDCLAIM <- as.numeric(gsub('\\$|,', '', insurance_eval$OLDCLAIM))
+
+means <- apply(insurance_eval[, cols_na],
+               2, mean, na.rm = TRUE)
+
+insurance_eval$INCOME <- insurance_eval$INCOME %>% replace_na(means[1])
+insurance_eval$HOME_VAL <- insurance_eval$HOME_VAL %>% replace_na(means[2])
+insurance_eval$BLUEBOOK <- insurance_eval$BLUEBOOK %>% replace_na(means[3])
+insurance_eval$OLDCLAIM <- insurance_eval$OLDCLAIM %>% replace_na(means[4])
+insurance_eval$AGE <- insurance_eval$AGE %>% replace_na(means[5])
+insurance_eval$YOJ <- insurance_eval$YOJ %>% replace_na(means[6])
+insurance_eval$CAR_AGE <- insurance_eval$CAR_AGE %>% replace_na(means[7])
+
+# replace the z_ with the empty string using apply and gsub
+ insurance_eval[, categorical_vars] <-
+   apply(insurance_eval[, categorical_vars], 2, 
+         function(x) as.factor(gsub("z_", "", x)))
+ 
+ insurance_eval[, categorical_vars] <- lapply(insurance_eval[, categorical_vars],
+                                               factor)
+# replace "" a factor label in JOB and replace with other to mean other jobs
+levels(insurance_eval$JOB)[levels(insurance_eval$JOB) == ""] <- "Other"
+```
+
+- Predictions:
+
+```{r predict-evaluation, echo=FALSE}
+# probabilities
+probabilities <- predict(fit, type = "response", 
+                         newx = data.matrix(insurance_eval[,3:25]))
+
+# classification with threshold > 0.5 neighborhood is in high crime level, not
+# otherwise
+is_in_car_crash <- predict(fit, type = "class", 
+                                newx = data.matrix(insurance_eval[,3:25]))
+is_in_car_crash <- ifelse(is_in_car_crash >= 0.5, "yes", "no")
+
+predictions <- data.frame(probabilities,is_in_car_crash)
+colnames(predictions) <- c("probabilities", "Car_Crash")
+```
+
+```{r predict-amt, echo=FALSE}
+insurance_eval$TARGET_FLAG <- predictions$Car_Crash # to add to the model to 
+# predict the amount
+# convert to numeric and predict
+insurance_eval$TARGET_FLAG <- as.numeric(insurance_eval$TARGET_FLAG)
+cost <- predict(lm2_insurance, newdata = data.frame(insurance_eval[,c(1, 3:25)]))
+predictions <- cbind(predictions, cost)
+predictions
+```
+
+- Appendix of R code
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```

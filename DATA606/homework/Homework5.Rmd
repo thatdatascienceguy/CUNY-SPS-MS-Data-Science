@@ -1,0 +1,46 @@
+---
+title: "Homework 5"
+author: "Jonathan Hernandez"
+date: "March 21, 2018"
+output: html_document
+---
+
+5.6
+
+Given 90% CI for population mean = (65,77) and assuming the poplulation is approximately
+
+normal, and n = 25 observations,
+
+to find the sample mean is the midpoint of the 90% CI that is xbar = 71.
+
+Finding the margin of error (ME) requires using the Confidence Interval formula:
+
+xbar + ME = upper bound or xbar - ME = lower bound
+
+plugging in the numbers gives (using the upper bound, lower bound gives you the same answer)
+
+ME = upper bound - xbar = 77-71 = 6 so margin of error is 6.
+
+we also must find the sample standard deviation s
+
+using the Margin of Error equation, ME = t* s/sqrt(n) and rearranging the variables gives
+
+s = ME (sqrt(n) / t*). The distribution has 25 degrees of freedom and looking up t_25 gives a value of 1.33
+
+and plugging in the values gives s = 22.55639 as the sample standard deviation.
+
+5.14
+Given: Margin of error (ME) = 25
+sample standard deviation s = 250
+
+a) for a 90% confidence interval, using the equation of Margin of Error, 
+
+ME = t_n (s/sqrt(n)) and rearranging the equation for n = (t_n * s / ME)^2
+
+b) if Luke is using a 99% confidence interval, the sample size will increase as using a 99% confidence interval yields
+
+a larger t-value than using a 90% confidence interval and based on the equation for n above, it is proportional to the square of the 
+
+t-value.
+
+c)

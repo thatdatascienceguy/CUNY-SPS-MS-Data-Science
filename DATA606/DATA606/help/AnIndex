@@ -1,0 +1,15 @@
+DATA606-package	DATA606-package
+.onAttach	onAttach
+calc_streak	calc_streak
+demo	demo
+getLabs	getLabs
+hello	hello
+normalPlot	normalPlot
+onAttach	onAttach
+plot_ss	plot_ss
+present	present
+qqnormsim	qqnormsim
+sat	sat
+shiny_demo	shiny_demo
+startLab	startLab
+viewLab	viewLab

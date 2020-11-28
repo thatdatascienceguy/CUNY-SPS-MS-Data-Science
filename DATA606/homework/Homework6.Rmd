@@ -1,0 +1,99 @@
+---
+title: "DATA 606 Homework 6"
+author: "Jonathan Hernandez"
+date: "April 2, 2018"
+output: html_document
+---
+
+6.6, 6.12, 6.20, 6.28, 6.44, 6.48
+
+6.6
+
+a) This is false as the confidence interval is used to support the population porportion and not the sample.
+
+b)  given n = 1012 and p_success (agreeing with the 2010 healthcare law) is 0.46 and
+
+thus (1-p) = 0.54 and the conditions of the sampling distribution of p being nearly normal
+
+are satisified (1012*0.46) >= 10 and the sample observations are independent.
+
+this is true as computing the margin error z*sqrt(p(1-p)/n) and using p_success as the point estimate 
+
+making a 95% confidence interval of (43%, 49%)
+
+c) False as the population porportion changes within each sample and can change the confidence interval and the sample 
+
+porportions may not be between 43% and 49%
+
+d) False as decreasing z* in the equation for the margin error would make it smaller than the 3% and not greater.
+
+6.12
+
+a) the 48% is a sample statistic as it comes from the sample of 1259 US residents.
+
+b) using 95% confidence interval, z* = 1.96, n = 1259 US residents, and that 48% of students think marijuana should be legal
+
+the 95% of the CI is (0.4524, 0.5075)
+
+c) Yes this is true as the data are nearly normal as the sample observations are independent and that
+
+np >= 10 for n = 1259 and p = 0.48
+
+d) Based on the 95% confidence interval, it lies between 45% and 50% roughly half, therefore it is not true that the majority of 
+
+americans think marijuana should be legal.
+
+6.20
+
+To know how many people are needed n, let ME = 0.02 and as in 6.12 let p = 0.48 and z* = 1.96
+
+solving for n from the equation of margin of error gives n = p(1-p)/ ((ME/z*)^2) which equals
+
+n = 2397.16 rounding up gives n = 2398 people in order to make the margin of error to 2%.
+
+6.28
+
+let $p_{oregon}$ = 0.088, let $p_{California}$ = 0.08
+
+also let $n_{oregon}$ = 4691 and $n_{california}$ = 11545 and z* = 1.96
+
+The observations are independent and np >= 10 for each state and follow a normal model.
+
+the difference in point estimates $p_{oregon}$ - $p_{California}$ =  0.008 = 
+
+calculating SE gives sqrt($p_{oregon}$(1-$p_{oregon}$) / $n_{oregon}$ 
++ $p_{California}$(1-$p_{California}$) / $n_{california}$) = 0.004845984
+
+and the 95% CI is (-0.0014,0.0174) so we are 95% confident that the true population percentage of people
+
+who are sleep deprived in California and Oregon is near 1%
+
+6.44
+
+a) let $N_{0}$ = barking deer prefer to forage in different habitats equally and
+
+$N_{A}$ = barking deer prefer to forage in certain habitats over others
+
+b) We can use a Chi-Squared test to answer the question as the data are categorical and from a simple random sample.
+
+c) calculating the test statistic for each habitat:
+
+```{r zscores}
+zwoods = (4 - 0.048*426) / sqrt(0.048*426)
+zgrassplot = (16 - 0.147*426) / sqrt(0.147*426)
+zforests = (67 - 0.396*426) / sqrt(0.396*426)
+zother = (345 - 0.409*426) / sqrt(0.409*426)
+
+zwoods
+zgrassplot
+zforests
+zother
+```
+
+if we do the chi-squared test statistic we get x^2 = zwoods^2 + zgrassplot^2 + zforests^2 + zother^2
+
+results in x^2 = 276.6135
+
+The result is a large number and it can be suggested that the data are bias that we fail to reject the null hypothesis and favor
+
+the alternative that barking deer prefer to forage in certain areas (bias over other areas). (also is the answer for d)

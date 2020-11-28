@@ -1,0 +1,362 @@
+---
+title: "DATA621 Homework3 - Crime Ratings"
+author: "Jonathan Hernandez"
+date: "June 20, 2018"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+## Introduction
+
+- This assignment looks at crime information on various neighborhood for a major
+
+city. There are several variables and the goal is to come up with a binary
+logistic
+
+regression model that can predict whether a particular neighborhood will be at
+
+risk for high crime levels. I will examine a few models and use the best criteria
+
+based on statistics such as ROC curves/AUC (Area under the curve) values and
+
+confusion matricies for each model. The model with the best performance and 
+accuracy 
+
+will be considered. Finally, the model will be evaluated using the training data
+
+and then I will make predictions based using the evaluation data set.
+
+## Data Preparation
+
+- Let's first load the dataset and examine the structure and summary of the
+dataset
+
+```{r get-data, echo=FALSE}
+crime <- read.csv("crime-training-data.csv")
+```
+
+- Summary:
+
+```{r, echo=FALSE}
+summary(crime)
+```
+
+- Structure (number of rows and columns, variable type such as int, factor etc):
+
+```{r, echo=FALSE}
+str(crime)
+```
+
+- Transform tax and rad variables numberic instead of integer for computation
+
+such as computing correlation between attributes. Later, we wil change the target
+
+and chas attributes to be factors instead of integers so they can be labeled
+properly.
+
+```{r conversion-of-vars, echo=FALSE}
+# change to rad and tax to numerics
+crime$tax <- as.numeric(crime$tax)
+crime$rad <- as.numeric(crime$rad)
+```
+
+- The summary of the dataset shows that there are no missing values and besides
+
+the response variable target and the explanatory variable chas, all others are
+of
+
+the numeric type.
+
+## Data Exploration
+
+- Let us make some plots like histograms and see how each variable behaves. Also,
+
+I will plot some of the variables for each crime rate below and above the
+
+median crime rate.
+
+- Histograms of each variable
+
+```{r hist-plot, echo=FALSE}
+if (!require(dplyr)) install.packages("dplyr", dependencies = TRUE)
+if (!require(ggplot2)) install.packages("ggplot2", dependencies = TRUE)
+if (!require(tidyr)) install.packages("tidyr", dependencies = TRUE)
+
+# do a histogram plot for each attribute, remove labels and have title only
+ggplot(gather(crime), aes(x=value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(~ key, scales = "free") +
+  theme_bw() +
+  theme_classic() +
+  ggtitle("Histogram of All Attributes") +
+  theme(axis.title = element_blank())
+```
+
+- There appears to be serveral outliers in most of the variables but we will keep 
+them for
+
+now and use them in our models.
+
+- Also let us see how well our data is correlated along with one another. I will
+
+create a correlation table to see the correlation coefficients against each pair
+
+of attributes. This will be useful for one of the models to be built later on.
+
+```{r correlation-table, echo=FALSE}
+# create correlation matrix for the crime dataset; will be used to filter columns
+crime$chas <- factor(crime$chas)
+crime$target <- factor(crime$target)
+
+crime_correlation_matrix <- cor(crime[,c(1:2, 4:13)])
+crime_correlation_matrix
+```
+
+## Build Models
+
+- I will use the training data to build at least 3 different binary logistic 
+regression
+
+models using different models and techniques.
+
+- Let's first with the trivial easiest model; include all variables to predict
+
+if a city will be above or below the crime rate. No variable elimination is done.
+
+### Model 1
+
+```{r model1, echo=FALSE}
+lm1_crime <- glm(target ~ zn + indus + chas +
+                          nox + rm + age + dis + rad + tax +
+                          ptratio + black + lstat + medv, 
+                 data = crime, family = "binomial")
+summary(lm1_crime)
+```
+
+### Model 2
+
+- The second model is done using backward elimination; from the above this 
+eliminates the 
+
+following variables due to having high p-values. The variables selected are
+
+the ones that have low p-values below 0.05 are significant.
+
+- indus
+
+- chas
+
+- rm
+
+- lstat
+
+```{r model2, echo=FALSE}
+lm2_crime <- glm(target ~ nox + age + dis + rad + tax + ptratio + medv,
+                 data = crime, family = "binomial")
+summary(lm2_crime)
+```
+
+### Model 3
+
+- The third model is to use the idea of correlation to filter out variables with
+
+high correlation using a cutoff point of 0.75. By using this, we can see if we can
+
+get a binary classification model that can have high accuracy of calculating if a 
+
+particular neighborhood will be targeted for a high crime rate or not. Variables that
+
+are highly correlated 
+
+```{r model3, echo=FALSE}
+# load caret package
+if (!require(caret)) install.packages("caret", dependencies = TRUE)
+
+# find columns that have absolute high correlation above 0.75 as a cutoff,
+# use R's caret package and the function findCorrelation
+well_correlated <- findCorrelation(crime_correlation_matrix, cutoff = 0.75)
+
+# create a crime subset that contains the variables that are not well correlated
+crime_subset <- crime %>% select(-well_correlated, target)
+
+# print variables to be used
+print("Variables to be used:")
+names(crime_subset)
+
+# make the binary model out of those variables
+lm3_model <- glm(target ~ zn + nox + age + dis + tax + ptratio + black + lstat +
+                   medv, data = crime_subset, family = "binomial")
+summary(lm3_model)
+```
+
+## Model 4
+
+- We will use the glmnet package to do feature selection on the crime dataset
+
+and retrieve the variables most relevant to predict the response variable target.
+
+I'm also using the concept of LASSO regularization that finds good regularization
+
+coefficent to prevent overfitting and puts a constraint on the sum of the feature
+values.
+
+Adding an extra term in the logistic regression (or linear regression) is common
+
+and usually involves adding a coefficent lambda $\lambda$ the higher the $\lambda$
+
+value is, the more bias but less overfitting. 
+
+```{r model4, echo=FALSE}
+if (!require(glmnet)) install.packages("glmnet", dependencies = TRUE)
+library(glmnet)
+
+# use the cv.glmnet to do cross validation on the data to find the optimal lambda
+# value that has the lowest missclassification rate in predicting target
+lm4_model <- cv.glmnet(x=data.matrix(crime[,1:13]), y=crime$target, 
+                    family = "binomial", alpha = 1, nlambda = 100,
+                    type.measure = "class")
+# plot the model and show lambda values that provide minimal missclassification rate
+plot(lm4_model)
+
+# fit the model based on picking a model that has minimal lambda (penalty)
+# use the lambda that is 1 standard error from the min value so features may be
+# removed and less variables
+fit <- glmnet(x=data.matrix(crime[,1:13]), y=crime$target, family = "binomial",
+              alpha = 1, lambda = lm4_model$lambda.1se)
+
+# output coefficents of the fitted model and which variables we will select
+fit$a0
+fit$beta[,1]
+# compute AIC when using the GLM package for fitting a model with regression
+# AIC computation is below:
+k <- fit$df # number of features, degrees of freedom
+loglikhood <- fit$nulldev - deviance(fit) # log-likihood
+AICc <- -2*loglikhood + 2*k
+AICc
+```
+
+### Summary of the built models
+
+- Starting with Model 1 that is to include all variables based on 
+
+the coefficents is showing that the variable nox (nitrogen oxide concentration)
+
+has the most influence out of the other variables and says that for
+
+every concentration, all constants held constant, the probability will greatly increase 
+
+and will be more likley for that town to have a high crime level.
+
+- The second model which uses backward elimination has coefficents that have good
+
+significant p-values and has a higher AIC value. Like the first model, the 
+
+coefficent for nox is high and seems to be the main variable that holds the most
+
+weight when computing the probability of a city having a high crime level. The only
+
+coefficent that is negative is the tax variable which means for all other variables
+
+held constant and for every 1% increase in tax rate, the probability of that city
+
+being a high crime level city decreases by a factory of 0.0082.
+
+- The third model uses correlation matricies and the correlation threshold of 0.75
+
+and uses the 2nd least variables. The AIC value is higher than the first two models.
+
+Coefficents are similar and took less time to converge to a solution (see the
+
+Fisher Scoring iterations in the summary of model 3).
+
+- Model 4 the final model uses the concept of LASSO (Least absolute shrinkage 
+
+and selection operator) to select variables and prevent the model from overfitting
+
+the data using the concept of regularization to penalize variables that would
+
+overfit the data. Variable coefficents are the similar but the rm (average number
+
+of rooms per dwelling) is 0 and is the only variable not included in the model.
+
+The AIC is low as well which makes it a good candidate as well for picking a good
+
+model.
+
+## Selecting Model
+
+- After looking at each model, I decided to go with the one with the lowest AIC
+
+model as that rubric is used for doing feature selection and an appropriate model.
+
+I have selected model 4 (model using LASSO and regularization) as the model of choice.
+
+The reason for this is the low AIC value it has (running it shows it is negative)
+
+while the other models are positive AIC values. Also using the glmnet function
+
+with regularization is good as it helps the model to prevent overfitting. 
+
+- Confusion Matrix along with accuracy, specificity, sensitivity
+
+```{r evaluation, echo=FALSE}
+# predict on the training data to compute stats
+predict_train <- predict(fit, type = "class", newx = data.matrix(crime[,1:13]),
+                         s = "lambda.1se")
+conf_matrix <- confusionMatrix(factor(predict_train), crime$target, positive = "1")
+conf_matrix
+conf_matrix_table <- conf_matrix$table
+```
+
+- F1 Score:
+
+```{r f1, echo=FALSE}
+f1 <- (2 * precision(conf_matrix_table) * sensitivity(conf_matrix_table)) / 
+  (precision(conf_matrix_table) + specificity(conf_matrix_table))
+f1
+```
+
+- Classification error rate
+
+```{r class-eror-rate, echo=FALSE}
+error_rate <- 1 - conf_matrix$overall['Accuracy'] # extract accuracy
+names(error_rate) = "Classification error rate"
+error_rate
+```
+
+- Precision
+
+```{r precision, echo=FALSE}
+precision(conf_matrix_table)
+```
+
+- Predict using the evaluation dataset
+
+```{r predict-evaluation, echo=FALSE}
+if(!require(pROC)) install.packages("pROC", dependencies = TRUE)
+library(pROC)
+
+# evaluation dataset to test out model
+crime_eval <- read.csv("crime-evaluation-data.csv")
+# probabilities
+probabilities <- predict(fit, type = "response", 
+                         newx = data.matrix(crime_eval[,1:13]))
+
+# classification with threshold > 0.5 neighborhood is in high crime level, not
+# otherwise
+above_med_crime_rate <- predict(fit, type = "class", 
+                                newx = data.matrix(crime_eval[,1:13]))
+above_med_crime_rate <- ifelse(above_med_crime_rate >= 0.5, "yes", "no")
+
+predictions <- data.frame(probabilities,above_med_crime_rate)
+colnames(predictions) <- c("probabilities", "aboveCrimeLevel")
+predictions
+```
+
+- Appendix of R code
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```

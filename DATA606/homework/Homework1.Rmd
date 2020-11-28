@@ -1,0 +1,149 @@
+---
+title: "Homework Chapter 1"
+author: "Jonathan Hernandez"
+date: "February 11, 2018"
+output: html_document
+---
+
+1.8
+
+a) each row in the data matrix represents a person’s smoking habits and their information like age, gender, income, do they smoke and how much.
+
+b) There were 1691 participants in the survey based on the last row number in the dataset.
+
+c) Variable types:
+
+sex – Non-ordinal categorical variable
+
+age – Numerical discrete variable
+
+marital – Non-ordinal categorical variable
+
+grossIncome – Numerical, continuous variable
+
+smoke – Numerical discrete variable
+
+amtWeekends – numerical discrete variable
+
+amtWeekends – numerical discrete variable
+
+1.10
+
+a) the population of interest are the 160 children in the study. The sample in this study are the students in the two groups, one who were given instructions and the others who were not given any explicit instructions.
+
+b) the results of the study can be inferred to the population as every student was involved in the study. Even if not every student was in the sample, a casual relationship is not established as what result each child puts does not affect the other child.
+
+1.28
+
+a) we can conclude that smoking does cause dementia later in life as the people who had dementia and smoke were more likely and increased with smoking usage.
+
+b) The statement “The study shows that sleep disorders lead to bullying in school children” is not justified as it is saying sleep disorders lead to bullying which was not mentioned or to the be case in the article. The statement is the converse of the finding in the article. The conclusion should be that children who bully and behave bad are more likely to have sleep disorders.
+
+1.36
+
+a) Experiment
+
+b) The treatment group is the group that exercises and the control group are the people who don't do anything.
+
+c) No.
+
+d) No. Subjects are instructed in what group they belong to.
+
+e) Exercising often helps stimulate the mind and those who exercise may score well on the mental health exam.
+
+This cannot be generalized to the public as not enough information is given other than what age the subject belongs to. There would 
+
+have to be other variables to consider.
+
+1.48
+
+Using R:
+
+```{r, makeboxplot, echo=TRUE, eval=TRUE}
+library(openintro)
+scores <- c(57, 66, 69, 71, 72, 73, 74, 77, 78, 78, 79, 
+            79, 81, 81, 82, 83, 83, 88, 89, 94)
+summary(scores)
+
+boxPlot(scores)
+```
+
+1.50
+Historgram a) is a normal distribution (unimodal) and matches with boxplot 2) as the boxplot has the median about 60 like the
+
+histogram and shows few outliers after about 67.
+
+Histogram b) is a uniform distribution that matches with boxplot 3) as boxplot 3 doesn’t have any outliers and goes from about 0 to 100.
+
+Histogram c) is a right skewed bimodal distribution matching with 1) as the range goes from about 0 to after about 6 and shows many outliers after 4 and the median is at about 1.5
+
+1.56
+
+a) The distribution is expected to be about symmeterical as while there are quite alot of houses
+costing less than 1,000,000, there are a meaningful number and percent of houses more than 6 million.
+
+The mean would be best to examine the data as well as the standard deviation as that is the common items looked on in a 
+
+symmetric distribution.
+
+b) The distribution is expected to be right skewed as the higher the price around 1m the frequency decreases sharply 
+
+and using the IQR helps to examine the asymmetry and using the mean median does not change like the mean does the more skewed
+
+the data.
+
+c) The distribution is a right skewed as the peak is around 0 to 1 drinks as most students are assumed to be under 21.
+
+using the IQR and the median helps out as the IQR describes the asymmetry and the median doesn't change.
+
+d) The distribution is a right skewed as many employees make around the same amount and with few people making much higher
+
+salary than everyone else. Using the IQR and the median helps out as the IQR describes the asymmetry and the median doesn't change.
+
+
+1.70
+
+a) looking at the mosiac plot shows that survival is actually dependent as it is shown that the probabilities of survival are
+
+different if the person gets the transplant or not and also the vertical boxes don't align.
+
+b) The box plot shows that people who got the transplant live much longer and the median is much higher than someone who didn't get the transplant and is very efficent.
+
+c) using R:
+```{r patients-who-died, eval=TRUE, echo=TRUE}
+library(openintro)
+data("heartTr")
+porportion_treatment_died <- nrow(subset(heartTr, transplant == "treatment"
+                              & survived == "dead")) / nrow(heartTr)
+porportion_control_died <- nrow(subset(heartTr, transplant == "control" 
+                            & survived == "dead")) / nrow(heartTr)
+
+porportion_treatment_died
+porportion_control_died
+```
+
+d) 
+
+i. The claim that is being tested is to see if the treatment of the heart can increase lifespan and is effective.
+
+ii. 
+
+    blank 1: green (cards)
+
+    blank 2: red (cards)
+    
+    blank 3: n(transplant==control) (number of users who didn't have a transplant)
+    
+    blank 4: n(transplant==treatment) (number of users who got the transplant)
+    
+    blank 5: 0
+    
+    blank 6: different
+    
+iii.
+
+    The simulation results show that leaving to chance, that about 50% of the time,
+    
+    the dead were just as likley to receive a transplant almost exactly as likley to not
+    
+    get one

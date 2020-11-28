@@ -1,0 +1,112 @@
+/* CSS Document */
+
+/* Tooltip style */
+.tooltip {
+	position: absolute;
+	width: 300px;
+	margin-top: 10px;
+	padding: 5px 10px 15px 10px;
+	border: 2px solid #666;
+	border-left: 2px solid #CCC;
+	border-top: 2px solid #CCC;
+	background-color: #EEE;
+}
+
+/*	This style added to remove margins around ad-hoc text. They are created by the FCKEditor which always adds a <p>.
+	IE style incompatibilities are fixed by including ie.css (for programs only) in the client dir.
+	This may be overridden by the publi_custom.php stylesheet. */
+.acalog-adhoc {
+	margin: -10px 0px;
+}
+
+em .tooltip, em span table.td_dark, em span div.td_dark { font-style: normal; }
+strong .tooltip, strong span table.td_dark, strong span div.td_dark { font-weight: normal; }
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { font-size: inherit; }
+
+/*	Fix spacing around ULs in an ad-hoc text.
+		This will solve text overlapping and make the UL flush left with the courses. */
+.acalog-adhoc ul {
+	margin: 0px !important;
+	padding-left: 0px;
+	margin-bottom: 10px !important;
+}
+
+.acalog-adhoc ol {
+	margin-bottom: 1em;
+}
+
+.acalog-highlight-search-1, .searchword {
+	background-color: #B9C9FF;
+	font-size: inherit;
+}
+
+.acalog-highlight-search-2 {
+	background-color: #FFB9C9;
+	font-size: inherit;
+}
+
+.acalog-highlight-search-3 {
+	background-color: #C9FFB9;
+	font-size: inherit;
+}
+
+.acalog-highlight-search-4 {
+	background-color: #FFCBB9;
+	font-size: inherit;
+}
+
+.acalog-highlight-search-5 {
+	background-color: #FFFF00;
+	font-size: inherit;
+}
+
+.acalog-highlight-search-6 {
+	background-color: #C299FF;
+	font-size: inherit;
+}
+
+.acalog-highlight-ignore .acalog-highlight-search-1,
+.acalog-highlight-ignore .searchword,
+.acalog-highlight-ignore .acalog-highlight-search-2,
+.acalog-highlight-ignore .acalog-highlight-search-3,
+.acalog-highlight-ignore .acalog-highlight-search-4,
+.acalog-highlight-ignore .acalog-highlight-search-5,
+.acalog-highlight-ignore .acalog-highlight-search-6 {
+	background-color: transparent;
+}
+
+.ajaxcourseindentfix .acalog-social-media-links {
+	display:inline;
+	margin-right: 4px;
+	position:relative;
+	top:4px;
+}
+
+.acalog-social-media-links img {
+	display:inline;
+}
+
+/* Hide the Explanation of Access keys */
+.accesskeys {
+	position: absolute;
+	left:-10000px;
+	top: auto;
+	width:200px;
+	text-align:left;
+	width:1px;
+	height:1px;
+	overflow:hidden;
+}
+
+.acalog_catalog_name {
+	display: none;
+}
+
+.acalog_archived_catalog {
+	display: none;
+}
+
+/*	Hide images with a "hidden" class. (ticket #3996)	*/
+img.hidden {
+	display: none;
+}

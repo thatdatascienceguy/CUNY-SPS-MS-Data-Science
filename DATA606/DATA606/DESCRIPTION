@@ -1,0 +1,25 @@
+Package: DATA606
+Type: Package
+Title: DATA606 Statistics and Probability for Data Analytics
+Version: 0.2
+Date: 2017-08-29
+Author: Jason Bryer
+Maintainer: Jason Bryer <jason@bryer.org>
+Description: Package to support CUNY DATA606 Statistics and Probability for
+    Analytics course.
+License: Creative Commons
+LazyData: TRUE
+Suggests: R.rsp
+VignetteBuilder: R.rsp
+RoxygenNote: 6.0.1
+Built: R 3.4.3; ; 2018-01-31 01:54:33 UTC; unix
+RemoteType: github
+RemoteHost: https://api.github.com
+RemoteRepo: DATA606
+RemoteUsername: jbryer
+RemoteRef: master
+RemoteSha: ab793d5d027eba5ba76e3894e8f6ad7bda29742b
+GithubRepo: DATA606
+GithubUsername: jbryer
+GithubRef: master
+GithubSHA1: ab793d5d027eba5ba76e3894e8f6ad7bda29742b

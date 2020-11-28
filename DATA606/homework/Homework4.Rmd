@@ -1,0 +1,198 @@
+---
+title: "IS606 Homework 4"
+author: "Jonathan Hernandez"
+date: "March 5, 2018"
+output: html_document
+---
+
+4.4
+
+a) Based on the graph, the point estimate of the average height is 171.1 cm
+
+and the median is 170.3 cm
+
+b) Standard deviation is 9.4 and the IQR is 14 based on subtracting Q3 - Q1
+
+c) A person who is 180 cm call wouldn't be that unusually tall as that is slightly
+
+higher than the average and also falls within one standard deviation from the mean.
+
+someone who is 155 cm is unusually short as that is someone
+
+who is more than 2 standard devivations away from the average.
+
+d) No I would not expect the mean and standard deviation to be the same as you are taking a new sample
+
+and thus a different sample mean and sample standard deviation.
+
+e) We can use the standard error to compute the variability of the point estimates.
+
+SD of the sample mean = SD/sqrt(n) where n in this case is 507 and SD = 9.4
+
+```{r heights-adults-SD, echo=TRUE}
+9.4/sqrt(507) # standard error
+```
+
+4.14
+
+a) This is false as the 436 American are in the sample and the confidence interval is to infer and see if the population mean
+
+guessed is in the confidence interval.
+
+b) this is not true as confidence intervals can apply to all distributions not just normal distributions and even though skewed, it
+
+is slightly normal.
+
+c) False as the confidence interval is an range or interval where the populuation mean might reside in given a confidence interval.
+
+d) Yes this is true; the confidence interval is shown that we are 95% confident that the population mean of spending lies between
+
+($80.31, $89.11)
+
+e) False. While the confidence interval would get narrower, you would have to worry about your point estimate and could have a Type 
+
+1 error or Type 2 error.
+
+f) False. dividing the margin of error by 3 would have to divide your SE by a 3 and not your sample size.
+
+g) The margin of error is unknown as the population or sample standard deviation was not given and is needed to know the margin of 
+
+error.
+
+4.24
+
+a) Conditions are sastified as follows:
+
+1. the random sample of the 36 children are independent of each other, one child gifted doesn't affect
+
+whether the others are or not.
+
+2. the data are slightly skewed but can still be treated as a normal distribution
+
+3. The population is much larger than the sample size. (n >= 30)
+
+b)
+
+Let the null hypothesis be $\sf{H_{0}}$ be the case when children at 32 months old on average learn to count to 10 successfully.
+$\sf{H_{0}}$: $\mu$ = 32
+
+Let the alternative hypothesis be $\sf{H_{A}}$ be the case when children less than 32 months of age learn to count to 10 successfully.
+$\sf{H_{A}}$: $\mu$ < 32
+
+using a significance level of 0.10, the z* = 1.645, and the standard the 90% confidence interval is
+
+```{r conf-child, echo=TRUE}
+samp_mean <- 30.69
+SE <- 4.31/sqrt(36)
+ci.childage <- c(samp_mean - (1.645 * SE), samp_mean + (1.645 * SE))
+ci.childage
+```
+
+Doing the confidence interval, the average of 32 is not within the interval and we fail to reject the null hypothesis that children learn to count to 10 on average when they are 32 months old.
+
+c) computing the p value:
+
+```{r p-value, echo=TRUE}
+# computing the z score
+Z_score <- (samp_mean - 32)/SE
+pnorm(Z_score) # p-value as the sample mean is less than the proposed population mean we take the left side shaed area
+```
+
+Looking at the p-value = 0.0341, and the significance level was $\alpha$ = 0.10 we reject the null hyopthesis.
+
+d) the 90% confidence interval was computed in b) with the 90% CI being (29.50834 31.87166).
+
+e) the confidence interval and the hypothesis test do agree as the p-value shows that it is smaller than the 
+
+significance level and we reject the null hypothesis and the proposed population mean we are 90% confident it does not lie in the 
+
+interval and we can reject it also.
+
+4.26
+
+a) Let the null hypothesis be $\sf{H_{0}}$ = IQ equal of 100 and $\sf{H_{A}}$ $\not=$ IQ of 100
+
+using a significance level of 0.10, calculating the z-score is
+
+z = sample mean - null value / SE, using R
+
+```{r, z-score2, echo=TRUE}
+SE <- 6.5 / sqrt(36)
+samp_mean2 <- 118.2
+z_score2 <- (samp_mean2 - 100) / SE
+z_score2
+pnorm(z_score2)
+```
+The Z score is unusually high around 17 and computing the p-value is very close to 1 which is much higher than 0.10
+
+therefore we fail to reject the null hypothesis.
+
+b)
+
+Confidence interval
+```{r conf-interval, echo=TRUE}
+ci.IQ <- c(samp_mean2 - (1.645 * SE), samp_mean2 + (1.645 * SE))
+ci.IQ
+```
+
+c) The hypothesis test says we fail to reject the null hypothesis and the proposed population mean of IQ of 100 of mothers
+
+is not in the 90% confidence interval (116.4179 119.9821) so we also fail to reject the null hypothesis. therefore the two agree
+
+with each other.
+
+4.34
+
+The term "Sampling distribution" of the mean means that as you take more samples (increase the sample size), the collected means
+
+lean more towards the population mean and the shape of the sample means becomes more normal and centered around the true mean and
+
+population standard deviation.
+
+4.40
+
+a) given population mean of 9000 light bulbs and a standard deviation of 1000 hours.
+
+using R
+```{r prob-lightbulb, echo=TRUE}
+pnorm(10500, mean = 9000, sd = 1000, lower.tail = FALSE)
+```
+
+Probability of finding a random lightbuld lasting more than 10500 hours is about 6.6% percent.
+
+b) The Distribution of the mean lifespan of 15 lightbulbs is nearly normal.
+
+c) we have n = 15 and sample mean of 10500,
+
+calculating the z score and evaluating the right-sided tail we have
+
+```{r zscore-lightbulb, echo=TRUE}
+samp_size <- 15
+samp_bulb_mean <- 10500
+SE <- 1000 / sqrt(samp_size)
+z_score_bulb <- (samp_bulb_mean - 9000) / SE
+pnorm(z_score_bulb, lower.tail = FALSE)
+```
+
+Finding 15 lightbulbs whose lifespan is more than 10500 hours is extremely unlikley.
+
+d) population data with population mean/sd
+
+```{r, hist-lightbulb, echo=TRUE}
+bulbs <- rnorm(10000, mean = 9000, sd = 1000)
+hist(bulbs, probability = TRUE)
+
+# plot sample histogram of sampling 15 lightbulbs
+bulb_sample <- sample(bulbs, size = 15)
+hist(bulb_sample, probability = TRUE)
+```
+
+e) I'd say this could be done as we could use the CLT, take samples from the skewed distribution given mean and sd,
+
+plot the sample means over several iterations, and use z-scores to get an estimate of the probability.
+
+4.48
+
+If you increase your sample size and leave the sample mean/sd and null value, your Standard error (SE) will decreased and thus
+
+your z-score will get larger and your p-value will increase.
